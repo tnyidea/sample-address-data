@@ -1,30 +1,22 @@
 package models
 
 import (
+	_ "embed"
 	"encoding/json"
 	"github.com/hashicorp/go-memdb"
 	"github.com/tnyidea/go-sample-userdata/types"
-	"github.com/tnyidea/typeutils"
-	"io/ioutil"
 )
+
+//go:embed us-500.json
+var us500Bytes []byte
 
 type DB struct {
 	memDB *memdb.MemDB
 }
 
-func NewUserDatabase(filename ...string) (DB, error) {
-	var filenameString string
-	if filename != nil {
-		filenameString = filename[0]
-	}
-
-	b, err := ioutil.ReadFile(typeutils.StringDefault(filenameString, "./us-500.json"))
-	if err != nil {
-		return DB{}, err
-	}
-
+func NewUserDatabase() (DB, error) {
 	var users []types.User
-	err = json.Unmarshal(b, &users)
+	err := json.Unmarshal(us500Bytes, &users)
 	if err != nil {
 		return DB{}, err
 	}
