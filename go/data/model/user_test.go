@@ -1,8 +1,7 @@
-package models
+package model
 
 import (
 	"github.com/google/uuid"
-	"github.com/tnyidea/go-sample-userdata/types"
 	"log"
 	"testing"
 )
@@ -64,7 +63,7 @@ func TestCreateUserWithUUID(t *testing.T) {
 	}
 
 	uuidString := uuid.NewString()
-	newUser := types.User{
+	newUser := User{
 		Id:          uuidString,
 		FirstName:   "John",
 		LastName:    "Smith",
@@ -204,7 +203,7 @@ func TestDeleteUser(t *testing.T) {
 		log.Println("error: db.DeleteUserByUUID() failed: Expected err result from db.FindUserByUUID()")
 		t.FailNow()
 	}
-	if !user.IsEqual(types.User{}) {
+	if !user.IsEqual(User{}) {
 		log.Println("error: user != types.User{}")
 		t.FailNow()
 	}

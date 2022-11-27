@@ -1,10 +1,36 @@
-package models
+package model
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"github.com/tnyidea/go-sample-userdata/types"
+	"reflect"
 )
+
+type User struct {
+	Id          string `json:"id"`
+	FirstName   string `json:"firstName"`
+	LastName    string `json:"lastName"`
+	CompanyName string `json:"companyName"`
+	Address     string `json:"address"`
+	City        string `json:"city"`
+	County      string `json:"county"`
+	State       string `json:"state"`
+	Zip         string `json:"zip"`
+	Phone1      string `json:"phone1"`
+	Phone2      string `json:"phone2"`
+	Email       string `json:"email"`
+	Web         string `json:"web"`
+}
+
+func (v *User) String() string {
+	b, _ := json.MarshalIndent(v, "", "  ")
+	return string(b)
+}
+
+func (v *User) IsEqual(user User) bool {
+	return reflect.DeepEqual(*v, user)
+}
 
 func (d *DB) Count() (int, error) {
 	users, err := d.FindAllUsers()
@@ -14,7 +40,7 @@ func (d *DB) Count() (int, error) {
 	return len(users), nil
 }
 
-func (d *DB) CreateUser(user types.User) (types.User, error) {
+func (d *DB) CreateUser(user User) (User, error) {
 	tx := d.memDB.Txn(true)
 	defer tx.Abort()
 
@@ -24,7 +50,7 @@ func (d *DB) CreateUser(user types.User) (types.User, error) {
 
 	err := tx.Insert("user", user)
 	if err != nil {
-		return types.User{}, err
+		return User{}, err
 	}
 
 	tx.Commit()
@@ -32,7 +58,7 @@ func (d *DB) CreateUser(user types.User) (types.User, error) {
 	return user, nil
 }
 
-func (d *DB) FindAllUsers() ([]types.User, error) {
+func (d *DB) FindAllUsers() ([]User, error) {
 	tx := d.memDB.Txn(false)
 	defer tx.Abort()
 
@@ -41,9 +67,9 @@ func (d *DB) FindAllUsers() ([]types.User, error) {
 		return nil, err
 	}
 
-	var users []types.User
+	var users []User
 	for v := result.Next(); v != nil; v = result.Next() {
-		user := v.(types.User)
+		user := v.(User)
 		users = append(users, user)
 	}
 	tx.Commit()
@@ -51,32 +77,32 @@ func (d *DB) FindAllUsers() ([]types.User, error) {
 	return users, nil
 }
 
-func (d *DB) FindUserByUUID(uuidString string) (types.User, error) {
+func (d *DB) FindUserByUUID(uuidString string) (User, error) {
 	tx := d.memDB.Txn(false)
 	defer tx.Abort()
 
 	// id is unique, so we are sure to get only one result for uuidString
 	v, err := tx.First("user", "id", uuidString)
 	if err != nil {
-		return types.User{}, err
+		return User{}, err
 	}
 	tx.Commit()
 
 	if v == nil {
-		return types.User{}, ErrorNotFound
+		return User{}, ErrorNotFound
 	}
 
-	return v.(types.User), nil
+	return v.(User), nil
 }
 
-func (d *DB) UpdateUser(v types.User) (types.User, error) {
+func (d *DB) UpdateUser(v User) (User, error) {
 	if v.Id == "" {
-		return types.User{}, errors.New("invalid Id")
+		return User{}, errors.New("invalid Id")
 	}
 
 	_, err := d.FindUserByUUID(v.Id)
 	if err != nil {
-		return types.User{}, err
+		return User{}, err
 	}
 
 	return d.CreateUser(v)
@@ -95,20 +121,20 @@ func (d *DB) DeleteAllUsers() error {
 	return nil
 }
 
-func (d *DB) DeleteUserByUUID(uuidString string) (types.User, error) {
+func (d *DB) DeleteUserByUUID(uuidString string) (User, error) {
 	tx := d.memDB.Txn(true)
 	defer tx.Abort()
 
 	user, err := d.FindUserByUUID(uuidString)
 	if err != nil {
-		return types.User{}, err
+		return User{}, err
 	}
 
-	err = tx.Delete("user", types.User{
+	err = tx.Delete("user", User{
 		Id: uuidString,
 	})
 	if err != nil {
-		return types.User{}, err
+		return User{}, err
 	}
 	tx.Commit()
 
